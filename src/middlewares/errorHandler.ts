@@ -15,13 +15,31 @@ const errorHandler = (
   // ✅ Sequelize Validation Error
   if (err instanceof ValidationError) {
     statusCode = 400;
-    message = err.errors[0]?.message || "Validation failed";
+
+    const field = err.errors?.[0]?.path || "Field";
+    const msg = err.errors?.[0]?.message || "Validation failed";
+
+    message = `${msg}`;
+
+    return res.status(statusCode).json({
+      success: false,
+      message,
+    });
   }
 
   // ✅ Sequelize Unique Constraint Error
   if (err instanceof UniqueConstraintError) {
     statusCode = 409;
-    message = err.errors[0]?.message || "Duplicate value already exists";
+
+    const field = err.errors?.[0]?.path || "Field";
+    const value = err.errors?.[0]?.value;
+
+    message = `${field.charAt(0).toUpperCase() + field.slice(1)} '${value}' already exists.`;
+
+    return res.status(statusCode).json({
+      success: false,
+      message,
+    });
   }
 
   // ✅ Mongoose validation error

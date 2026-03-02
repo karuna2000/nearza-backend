@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { adminAuth } from "../middlewares/auth";
 import { upload } from "../middlewares/multer";
-
+import { validate } from "../middlewares/zodValidator";
 import {
   createCategory,
   getAllCategories,
@@ -11,6 +11,7 @@ import {
   updateCategory,
   getAllCategoriesForAdmin,
 } from "../controllers/categoryController";
+import { createCategorySchema } from "../validators/categoryValidator";
 
 const router = Router();
 
@@ -19,7 +20,7 @@ const router = Router();
 // =============================================
 
 // Get all categories : GET
-router.get("/categories", getAllCategories);
+router.get("/all-categories", getAllCategories);
 
 // Get single category by ID : GET
 router.get("/single-category/:categoryId", getCategoryById);
@@ -33,6 +34,7 @@ router.post(
   "/create-category",
   adminAuth,
   upload.single("categoryImage"),
+  validate(createCategorySchema),
   createCategory,
 );
 

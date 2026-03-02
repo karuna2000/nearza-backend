@@ -13,12 +13,14 @@ import {
 // =============================================
 export const createCategory = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name, description } = req.body as {
-      name: string;
-      description?: string;
-    };
+    const { name, description } =
+      (req.body as {
+        name: string;
+        description?: string;
+      }) || {};
     let categoryImage: string | null = null;
 
+    if (!req.body?.name) throw new ApiError(400, "Name is required.");
     if (req.file?.path) {
       const uploadResult = await uploadOnCloudinary(req.file.path);
       categoryImage = uploadResult?.secure_url || null;
@@ -26,7 +28,7 @@ export const createCategory = asyncHandler(
 
     const category = await categoryModel.create({
       name,
-      description: description?.trim() || null,
+      description: description || null,
       categoryImage,
     });
 

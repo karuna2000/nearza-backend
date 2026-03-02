@@ -145,7 +145,7 @@ Step 2: Verify OTP
 
 ### 1️⃣ Send OTP
 
-**📍 Endpoint:** `POST /api/auth/send-otp`
+**📍 Endpoint:** `POST /api/users/send-otp`
 
 **📝 Purpose:** User ko OTP bhejne ke liye
 
@@ -163,60 +163,23 @@ Step 2: Verify OTP
 }
 ```
 
-**✅ Input Validation:**
-
-| Field   | Required                               | Rules                                              | Valid Examples                                                   |
-| ------- | -------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------- |
-| `email` | Optional (but email OR phone required) | • Valid email format<br>• Domain: .com ya .in only | ✅ user@gmail.com<br>✅ test@company.in<br>❌ invalid@domain.org |
-| `phone` | Optional (but email OR phone required) | • Exactly 10 digits<br>• Only numbers              | ✅ 9876543210<br>❌ 98765 (short)<br>❌ 98-765-43210 (hyphens)   |
-
-**⚙️ Backend Logic:**
-
-1. **Validation Check:**
-   - Email YA phone dono me se ek required hai
-   - Dono ek sath nahi allowed
-   - Email: valid format, domain check
-   - Phone: exactly 10 digits, numbers only
-
-2. **OTP Generation:**
-   - 6-digit random number generate (`generateOTP()` utility)
-
-3. **Database Storage (MongoDB):**
-   - Store: email/phone (only whichever is provided), otp, expiresAt
-   - Expiry: `process.env.OTP_EXPIRY_MINUTES` (default: 5 minutes)
-
-4. **Response:**
-   - Development: OTP response me milta hai
-   - Production: OTP email/SMS se jayega (TODO)
-
 **✅ Success Response:**
 
 ```json
 {
-  "statusCode": 200,
-  "data": {
-    "email": "user@gmail.com",
-    "phone": null,
-    "otp": "123456"
-  },
-  "message": "A one-time verification code has been sent successfully."
+    "success": true,
+    "message": "A one-time verification code has been sent successfully.",
+    "data": {
+        "email": "example@example.com",
+        "otp": "123456"
+    }
 }
+
 ```
-
-**❌ Error Scenarios:**
-
-| Error          | Reason                       | Message                                             |
-| -------------- | ---------------------------- | --------------------------------------------------- |
-| Both empty     | Email aur phone dono missing | "Either email or phone is required to generate OTP" |
-| Invalid email  | Wrong email format           | "Please enter a valid email address"                |
-| Invalid phone  | Not 10 digits ya letters hai | "Phone number must be exactly 10 digits"            |
-| Database error | MongoDB connection issue     | "Failed to generate OTP. Please try again."         |
-
----
 
 ### 2️⃣ Verify OTP & Authenticate
 
-**📍 Endpoint:** `POST /api/auth/verify-otp`
+**📍 Endpoint:** `POST /api/users/verify-otp`
 
 **📝 Purpose:** OTP verify karke user ko login/signup karna
 
@@ -244,61 +207,27 @@ Step 2: Verify OTP
 | `phone` | Optional (but email OR phone required) | • Exactly 10 digits<br>• Numbers only | ✅ 9876543210                                          |
 | `otp`   | **Required**                           | • Exactly 6 digits<br>• Numbers only  | ✅ 123456<br>❌ 12345 (5 digits)<br>❌ 12345a (letter) |
 
-**⚙️ Backend Logic:**
-
-1. **OTP Verification:**
-   - MongoDB me `{ email/phone, otp }` se latest record find karo (sorted by `createdAt: -1`)
-   - Check 1: OTP record milta hai?
-   - Check 2: `otpRecord.expiresAt < currentTime` → expired?
-
-2. **User Lookup:**
-   - SQL database me user search karo (`paranoid: false` — soft-deleted users bhi include)
-
-3. **User Not Found (New User):**
-   - Naya user create karo with only `email` or `phone` (DB defaults for rest)
-   - `isNewUser` flag = `true`
-
-4. **Soft-Deleted User Check:**
-   - `user.deletedAt` present hai to time since deletion calculate karo:
-     - **< 24 hours** → `403` error: must wait 24 hours
-     - **24h – 30 days** → `user.restore()` automatically
-     - **> 30 days** → `403` error: permanently deleted
-
-5. **Status Check:**
-   - `BLOCKED` → `403` error
-   - `DISABLED` → `403` error
-   - `SUSPENDED` → `403` error
-
-6. **Token & Cleanup:**
-   - JWT token generate (`id`, `email`/`phone`, `roles`)
-   - **ALL OTPs** for that email/phone delete karo (`deleteMany`)
-   - Token ko HttpOnly cookie me set karo (`maxAge: 24h`)
-   - Response bhejo
-
 **✅ Success Response (New User):**
 
 ```json
 {
-  "statusCode": 200,
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": 1,
-      "fullName": null,
-      "email": "user@gmail.com",
-      "phone": null,
-      "roles": ["CUSTOMER"],
-      "status": "ACTIVE",
-      "profileImage": null,
-      "cart": [],
-      "wishlist": [],
-      "addresses": [],
-      "createdAt": "2024-01-30T10:00:00.000Z",
-      "updatedAt": "2024-01-30T10:00:00.000Z"
-    },
-    "isNewUser": true
-  },
-  "message": "You have been authenticated successfully."
+    "success": true,
+    "message": "You have been authenticated successfully.",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyIiwiZW1haWwiOiJiaWxhbHNoZWlraDQ4QGV4YW1wbGUuY29tIiwicm9sZXMiOlsiQ1VTVE9NRVIiXSwiaWF0IjoxNzcyMjY5NDM0LCJleHAiOjE3NzM1NjU0MzR9.jBWyBsl0D6lia7iLXIJ-rkU3oFJoFyAkGx9P61ByCKA",
+        "user": {
+            "roles": [
+                "CUSTOMER"
+            ],
+            "status": "ACTIVE",
+            "id": 12,
+            "email": "bilalsheikh48@example.com",
+            "phone": null,
+            "updatedAt": "2026-02-28T09:03:54.506Z",
+            "createdAt": "2026-02-28T09:03:54.506Z"
+        },
+        "isNewUser": true
+    }
 }
 ```
 
@@ -306,52 +235,40 @@ Step 2: Verify OTP
 
 ```json
 {
-  "statusCode": 200,
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": 5,
-      "fullName": "John Doe",
-      "email": "john@gmail.com",
-      "phone": "9876543210",
-      "roles": ["CUSTOMER", "SELLER"],
-      "status": "ACTIVE",
-      "profileImage": "https://example.com/profile.jpg",
-      "cart": [...],
-      "wishlist": [...],
-      "addresses": [...]
-    },
-    "isNewUser": false
-  },
-  "message": "You have been authenticated successfully."
+    "success": true,
+    "message": "You have been authenticated successfully.",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJlbWFpbCI6ImF5ZXNoYWtoYW45MkBleGFtcGxlLmNvbSIsInBob25lIjoiOTEyMzQ1Njc4MCIsInJvbGVzIjpbIkNVU1RPTUVSIl0sImlhdCI6MTc3MjI2OTUwMywiZXhwIjoxNzczNTY1NTAzfQ.dXhxzBcKc9uOPg6aPJX135xC7fr5-Vf4Ayn44nPn9_M",
+        "user": {
+            "id": 2,
+            "fullName": "Ayesha Khan",
+            "email": "ayeshakhan92@example.com",
+            "phone": "9123456780",
+            "roles": [
+                "CUSTOMER"
+            ],
+            "status": "ACTIVE",
+            "profileImage": "https://res.cloudinary.com/al-aftab/image/upload/v1772260416/nearza/bdvubw25plwd824owfiu.jpg",
+            "refreshToken": null,
+            "createdAt": "2026-02-28T04:44:03.000Z",
+            "updatedAt": "2026-02-28T06:35:14.000Z",
+            "deletedAt": null
+        },
+        "isNewUser": false
+    }
 }
+
 ```
 
 **🎯 Frontend Logic:**
 
 - **isNewUser === true** → User ko profile completion page par bhejo
 - **isNewUser === false** → User ko dashboard/home par bhejo
-
-**❌ Error Scenarios:**
-
-| Error               | Reason                              | Status | Message                                                                 |
-| ------------------- | ----------------------------------- | ------ | ----------------------------------------------------------------------- |
-| Missing fields      | Email/phone ya OTP missing          | 400    | "Either email or phone is required to verify OTP" / "OTP is required"  |
-| Invalid OTP format  | OTP not 6 digits                    | 400    | "OTP must be exactly 6 digits"                                          |
-| Contains letters    | OTP me numbers ke alawa kuch hai    | 400    | "OTP must contain only numbers"                                         |
-| Invalid OTP         | Wrong OTP entered / already used    | 400    | "The verification code you entered is invalid."                         |
-| Expired OTP         | 5 minutes se zyada ho gaye          | 400    | "The verification code has expired. Please request a new code."         |
-| Recently deleted    | Account deleted < 24 hours ago      | 403    | "Your account was recently deleted. You can restore it after 24 hours." |
-| Permanently deleted | Account deleted > 30 days ago       | 403    | "Your account has been permanently deleted."                            |
-| Account blocked     | Admin ne block kiya                 | 403    | "Your account has been blocked. Please contact support for assistance." |
-| Account disabled    | Account disabled                    | 403    | "Your account is currently disabled. Please reach out to support."      |
-| Account suspended   | Temporary suspension                | 403    | "Your account has been temporarily suspended. Please try again later."  |
-
 ---
 
 ### 3️⃣ Get User Profile
 
-**📍 Endpoint:** `GET /api/auth/profile`
+**📍 Endpoint:** `GET /api/users/user-profile`
 
 **📝 Purpose:** Logged-in user ka profile data fetch karna
 
@@ -359,61 +276,35 @@ Step 2: Verify OTP
 
 **📥 Input:** None (token se user identify hota hai)
 
-**⚙️ Backend Logic:**
-
-1. **Authorization Check:**
-   - `req.user?.id` check karo (set by `userAuth` middleware)
-   - Missing → `401` error
-
-2. **Data Fetch:**
-   - `userModel.findByPk(userId)` — SQL database se user fetch
-   - Not found → `404` error
-
 **✅ Success Response:**
 
 ```json
 {
-  "statusCode": 200,
-  "data": {
-    "id": 1,
-    "fullName": "John Doe",
-    "email": "john@gmail.com",
-    "phone": "9876543210",
-    "roles": ["CUSTOMER"],
-    "status": "ACTIVE",
-    "profileImage": "https://example.com/profile.jpg",
-    "cart": [{ "productId": 101, "quantity": 2 }],
-    "wishlist": [201, 202, 203],
-    "addresses": [
-      {
-        "type": "home",
-        "street": "123 Main St",
-        "city": "Mumbai",
-        "state": "Maharashtra",
-        "pincode": "400001"
-      }
-    ],
-    "createdAt": "2024-01-15T10:00:00.000Z",
-    "updatedAt": "2024-01-30T10:00:00.000Z"
-  },
-  "message": "Your profile has been retrieved successfully."
+    "success": true,
+    "message": "Your profile has been retrieved successfully.",
+    "data": {
+        "id": 2,
+        "fullName": "Ayesha Khan",
+        "email": "ayeshakhan92@example.com",
+        "phone": "9123456780",
+        "roles": [
+            "CUSTOMER"
+        ],
+        "status": "ACTIVE",
+        "profileImage": "https://res.cloudinary.com/al-aftab/image/upload/v1772260416/nearza/bdvubw25plwd824owfiu.jpg",
+        "refreshToken": null,
+        "createdAt": "2026-02-28T04:44:03.000Z",
+        "updatedAt": "2026-02-28T06:35:14.000Z",
+        "deletedAt": null
+    }
 }
+
 ```
-
-**❌ Error Scenarios:**
-
-| Error         | Reason                  | Message                                          |
-| ------------- | ----------------------- | ------------------------------------------------ |
-| No user ID    | Token missing / invalid | "You are not authorized to perform this action." |
-| Invalid token | Token tampered/wrong    | "Invalid authentication token."                  |
-| Expired token | Token expired (> 1 day) | "Session expired. Please log in again."          |
-| User deleted  | User not found in DB    | "The requested user account could not be found." |
-
 ---
 
-### 4️⃣ Complete User Profile
+### 4️⃣ Update User Profile
 
-**📍 Endpoint:** `PATCH /api/auth/profile`
+**📍 Endpoint:** `PUT /api/users/update-profile`
 
 **📝 Purpose:** User apna profile complete/update kare (name, email, phone, image)
 
@@ -428,24 +319,27 @@ phone     (optional) - string
 file      (optional) - image file (profileImage)
 ```
 
-**⚙️ Backend Logic:**
-
-1. **Authorization Check:** `req.user?.id` verify karo
-2. **User Fetch:** `findByPk(userId)` — not found → `404`
-3. **Image Handling:**
-   - File uploaded hai → old image Cloudinary se delete karo
-   - New image Cloudinary par upload karo
-   - `secure_url` save karo; upload fail → `500` error
-4. **Other Fields:** `fullName`, `email`, `phone` — jo bhi provided hai update karo
-5. **Save:** `user.update(updateData)`
-
 **✅ Success Response:**
 
 ```json
 {
-  "statusCode": 200,
-  "data": { /* updated user object */ },
-  "message": "Your profile has been updated successfully."
+    "success": true,
+    "message": "Your profile has been updated successfully.",
+    "data": {
+        "id": 2,
+        "fullName": "Ayesha Khan",
+        "email": "ayeshakhan92@example.com",
+        "phone": "9121116780",
+        "roles": [
+            "CUSTOMER"
+        ],
+        "status": "ACTIVE",
+        "profileImage": "https://res.cloudinary.com/al-aftab/image/upload/v1772260416/nearza/bdvubw25plwd824owfiu.jpg",
+        "refreshToken": null,
+        "createdAt": "2026-02-28T04:44:03.000Z",
+        "updatedAt": "2026-02-28T09:11:22.738Z",
+        "deletedAt": null
+    }
 }
 ```
 
@@ -453,7 +347,7 @@ file      (optional) - image file (profileImage)
 
 ### 5️⃣ Logout
 
-**📍 Endpoint:** `POST /api/auth/logout`
+**📍 Endpoint:** `POST /api/users/logout`
 
 **📝 Purpose:** User ko logout karna
 
@@ -461,16 +355,11 @@ file      (optional) - image file (profileImage)
 
 **📥 Input:** None
 
-**⚙️ Backend Logic:**
-
-1. **Cookie Clear:**
-   - `token` cookie clear karo same security settings ke sath (`httpOnly`, `secure`, `sameSite: strict`)
-
 **✅ Success Response:**
 
 ```json
 {
-  "statusCode": 200,
+  "success": true,
   "data": "You have been logged out successfully.",
   "message": "You have been logged out successfully."
 }
@@ -485,7 +374,7 @@ file      (optional) - image file (profileImage)
 
 ### 6️⃣ Delete Account
 
-**📍 Endpoint:** `DELETE /api/auth/account`
+**📍 Endpoint:** `DELETE /api/users/delete-account`
 
 **📝 Purpose:** User apna account delete kare (soft delete)
 
@@ -493,18 +382,11 @@ file      (optional) - image file (profileImage)
 
 **📥 Input:** None
 
-**⚙️ Backend Logic:**
-
-1. **Authorization Check:** `req.user?.id` verify karo
-2. **User Fetch:** `findByPk(userId)` — not found → `404`
-3. **Soft Delete:** `user.destroy()` — `deletedAt` timestamp set hota hai (Sequelize paranoid)
-4. **Cleanup:** `refreshToken` null set karo, `token` cookie clear karo
-
 **✅ Success Response:**
 
 ```json
 {
-  "statusCode": 200,
+  "success": true,
   "data": "Your account has been deleted successfully.",
   "message": "Your account has been deleted successfully."
 }
@@ -525,7 +407,7 @@ Deleted at T=0
 
 ### 7️⃣ Get All Users (Admin Only)
 
-**📍 Endpoint:** `GET /api/admin/users`
+**📍 Endpoint:** `GET /api/users/all-users`
 
 **📝 Purpose:** Paginated list of all users with search/filter
 
@@ -540,13 +422,6 @@ Deleted at T=0
 | `search` | string | —       | —   | Search by fullName, email, phone  |
 | `role`   | string | —       | —   | Filter by role (e.g. `CUSTOMER`)  |
 | `status` | string | —       | —   | Filter by status (e.g. `ACTIVE`)  |
-
-**⚙️ Backend Logic:**
-- `search` → `Op.like` on `fullName`, `email`, `phone`
-- `role` → `JSON_CONTAINS` on `roles` JSON column (MySQL specific)
-- `status` → exact match
-- `refreshToken` column excluded from response
-- Ordered by `createdAt DESC`
 
 **✅ Success Response:**
 
@@ -570,7 +445,7 @@ Deleted at T=0
 
 ### 8️⃣ Update User Status (Admin Only)
 
-**📍 Endpoint:** `PATCH /api/admin/users/:userId/status`
+**📍 Endpoint:** `PUT /api/users/account-status/:userId`
 
 **📝 Purpose:** Admin kisi bhi user ka status change kare
 
@@ -584,16 +459,11 @@ Deleted at T=0
 }
 ```
 
-**⚙️ Backend Logic:**
-- `userId` from route params (converted to `Number`)
-- `userModel.findByPk(userId)` — not found → `404`
-- `user.update({ status })`
-
 **✅ Success Response:**
 
 ```json
 {
-  "statusCode": 200,
+  "success": true,
   "data": { /* updated user object */ },
   "message": "The user's account status has been updated successfully."
 }
@@ -603,7 +473,7 @@ Deleted at T=0
 
 ### 9️⃣ Get Single User (Admin View)
 
-**📍 Endpoint:** `GET /api/admin/users/:userId`
+**📍 Endpoint:** `GET /api/users/single-user/:userId`
 
 **📝 Purpose:** Single user ka complete data fetch karna
 
@@ -613,7 +483,7 @@ Deleted at T=0
 
 ```json
 {
-  "statusCode": 200,
+  "success": true,
   "data": { /* full user object */ },
   "message": "User details retrieved successfully."
 }
@@ -628,35 +498,10 @@ Deleted at T=0
 ```json
 {
   "statusCode": 400,
+  "success":false,
   "message": "Error description here"
 }
 ```
-
-### Complete Error Reference:
-
-| Status  | Error Message                                                                | When It Happens                          | User Action               |
-| ------- | ---------------------------------------------------------------------------- | ---------------------------------------- | ------------------------- |
-| **400** | "Either email or phone is required to generate OTP"                          | Email aur phone dono missing             | Koi ek field fill karo    |
-| **400** | "Please enter a valid email address"                                         | Invalid email format                     | Correct email daalo       |
-| **400** | "Phone number must be exactly 10 digits"                                     | Phone < 10 ya > 10 digits                | 10-digit number daalo     |
-| **400** | "Either email or phone is required to verify OTP"                            | OTP verify me email/phone missing        | Same email/phone use karo |
-| **400** | "OTP is required"                                                            | OTP field empty                          | OTP enter karo            |
-| **400** | "OTP must be exactly 6 digits"                                               | OTP 6 digits ka nahi                     | 6-digit OTP daalo         |
-| **400** | "OTP must contain only numbers"                                              | OTP me letters/symbols                   | Sirf numbers daalo        |
-| **400** | "The verification code you entered is invalid."                              | Wrong/already-used OTP                   | Correct/new OTP daalo     |
-| **400** | "The verification code has expired. Please request a new code."              | 5 minutes se zyada ho gaya               | Naya OTP request karo     |
-| **401** | "You are not authorized to perform this action."                             | Token/user ID missing                    | Login karo                |
-| **401** | "Invalid authentication token."                                              | Token invalid/tampered                   | Re-login karo             |
-| **401** | "Session expired. Please log in again."                                      | Token expired (> 1 day)                  | Re-login karo             |
-| **403** | "Your account was recently deleted. You can restore it after 24 hours."      | Deleted < 24h ago                        | 24h baad try karo         |
-| **403** | "Your account has been permanently deleted."                                 | Deleted > 30 days ago                    | New account banao         |
-| **403** | "Your account has been blocked. Please contact support for assistance."      | Admin ne block kiya                      | Support contact karo      |
-| **403** | "Your account is currently disabled. Please reach out to support."           | Account disabled                         | Support contact karo      |
-| **403** | "Your account has been temporarily suspended. Please try again later."       | Temporary suspension                     | Baad me try karo          |
-| **404** | "The requested user account could not be found."                             | User deleted/doesn't exist               | Re-signup karo            |
-| **500** | "Failed to generate OTP. Please try again."                                  | MongoDB connection issue                 | Retry karo                |
-| **500** | "Something went wrong while uploading your profile image. Please try again." | Cloudinary upload fail                   | Re-upload karo            |
-
 ---
 
 ## 📊 Database Schema
@@ -902,5 +747,3 @@ Example: ["CUSTOMER", "SELLER"] - Buyer bhi, seller bhi
 ---
 
 **🎉 Documentation Complete!**
-
-Questions? Doubts? Team se discuss karo! 💬

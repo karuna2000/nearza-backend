@@ -9,7 +9,7 @@ Legend:
 
 ---
 
-## 👤 User Module
+## 🧑‍💼 User Module
 
 ### 🔓 Public Routes
 - Send OTP → ✅
@@ -17,7 +17,7 @@ Legend:
 
 ### 🔐 User Protected Routes
 - Get User Profile → ✅
-- Complete User Profile → ✅
+- Update User Profile → ✅
 - Logout → ✅
 - Delete Account (Soft Delete) → ✅
 
@@ -28,25 +28,39 @@ Legend:
 
 ---
 
-## 🛒 Cart Module
-- Create Cart → ✅
-- Add Cart Item → ⏳
-- Get Cart with Items → ⏳
-- Update Cart Status → ⏳
-- Delete Cart → ⏳
+## 🏪 Seller Module
+
+### 🔐 User Protected Routes
+- Apply for seller account → ⏳
+- My Application → ⏳
+- Resubmit Seller Application → ⏳
+
+### 🔐 Seller Protected Routes
+- Seller Profile → ⏳
+- Update Seller Profile → ⏳
+- Soft Delete Seller Profile → ⏳
+- Restore Seller Profile → ⏳
+
+### 👑 Admin Routes
+- All Seller Applications → ⏳
+- Get Seller Details By ID → ⏳
+- Update Seller Status → ⏳
+
 
 ---
 
-## 📍 Address Module
-- Create Address → ✅
-- Get User Addresses → ⏳
-- Update Address → ⏳
-- Delete Address → ⏳
-- Default Address Logic Tested → ⏳
+## 📂 Category Module
 
----
+### 🔓 Public Routes
+- All Categories → ✅
+- Single Category → ✅
 
-## ❤️ Wishlist Module
-- Add to Wishlist → ⏳
-- Get Wishlist → ⏳
-- Remove Wishlist Item → ⏳
+### 👑 Admin Routes
+- Create Category → ❌ <!-- Validation error -->
+- Delete Category → ✅
+- Soft Delete Category → ✅
+- Update Category → ❌ <!-- Validation error -->
+- Toggle Category Status → ✅
+- All Categories For Admin → ✅
+
+<!-- Fix image for deletion -->

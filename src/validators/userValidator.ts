@@ -76,7 +76,7 @@ export const verifyOtpSchema = z.object({
 // =============================================
 // 📝 Complete User Profile Validator
 // =============================================
-export const completeUserProfileSchema = z.object({
+export const updateUserProfileSchema = z.object({
   body: z
     .object({
       fullName: z

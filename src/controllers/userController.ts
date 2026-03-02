@@ -211,9 +211,9 @@ export const getUserProfile = asyncHandler(
 );
 
 // =============================================
-// 📝 User Complete Profile Controller
+// 📝 User Update Profile Controller
 // =============================================
-export const completeUserProfile = asyncHandler(
+export const updateUserProfile = asyncHandler(
   async (req: Request & { file?: any; user?: any }, res: Response) => {
     const userId = req.user?.id;
 

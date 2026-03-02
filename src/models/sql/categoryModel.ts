@@ -41,6 +41,7 @@ Category.init(
         len: [2, 150],
       },
       set(value: string) {
+        if (!value) return;
         const cleaned = value.trim().toLowerCase();
         this.setDataValue("name", cleaned);
       },

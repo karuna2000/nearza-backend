@@ -6,7 +6,7 @@ import {
   sendOtp,
   verifyOtpAndAuthenticate,
   getUserProfile,
-  completeUserProfile,
+  updateUserProfile,
   logout,
   deleteAccount,
   getAllUsers,
@@ -16,7 +16,7 @@ import {
 import {
   sendOtpSchema,
   verifyOtpSchema,
-  completeUserProfileSchema,
+  updateUserProfileSchema,
   updateAccountStatusSchema,
   getAllUsersSchema,
   getUserByIdSchema,
@@ -41,13 +41,13 @@ router.post("/verify-otp", validate(verifyOtpSchema), verifyOtpAndAuthenticate);
 // Get current user profile : GET
 router.get("/user-profile", userAuth, getUserProfile);
 
-// Complete user profile (for new users) : PUT
+// Update user profile (for new users) : PUT
 router.put(
-  "/complete-profile",
+  "/update-profile",
   userAuth,
   upload.single("profileImage"),
-  validate(completeUserProfileSchema),
-  completeUserProfile,
+  validate(updateUserProfileSchema),
+  updateUserProfile,
 );
 
 // Logout user : POST
@@ -61,7 +61,7 @@ router.delete("/delete-account", userAuth, deleteAccount);
 // ================================================
 
 // Get all users with pagination, search, and filters : GET
-router.get("/users", adminAuth, validate(getAllUsersSchema), getAllUsers);
+router.get("/all-users", adminAuth, validate(getAllUsersSchema), getAllUsers);
 
 // Update user status (ACTIVE, DISABLED, BLOCKED, SUSPENDED) : PUT
 router.put(

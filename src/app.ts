@@ -18,7 +18,7 @@ import "./models/sql/associations";
 // SQL-based routes
 import userRoutes from "./routes/userRoutes";
 // import sellerRoutes from "./routes/sellerRoutes";
-// import categoryRoutes from "./routes/categoryRoutes";
+import categoryRoutes from "./routes/categoryRoutes";
 // import productRoutes from "./routes/productRoutes";
 // import cartRoutes from "./routes/cartRoutes";
 // import cartItemRoutes from "./routes/cartItemRoutes";
@@ -87,7 +87,7 @@ import errorHandler from "./middlewares/errorHandler";
 // =============================================
 app.use("/api/users", userRoutes); // User CRUD & Authentication
 // app.use("/api/sellers", sellerRoutes); // Seller application & management
-// app.use("/api/categories", categoryRoutes); // Product categories
+app.use("/api/categories", categoryRoutes); // Product categories
 // app.use("/api/products", productRoutes); // Product CRUD & listing
 // app.use("/api/carts", cartRoutes); // Cart management
 // app.use("/api/cart-items", cartItemRoutes); // Cart item management
